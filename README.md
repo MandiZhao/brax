@@ -44,8 +44,11 @@ pip install brax
 Alternatively, to install Brax from source, clone this repo, `cd` to it, and then:
 
 ```
-python3 -m venv env
-source env/bin/activate
+sudo apt-get install python3-venv
+python3 -m venv braxenv
+source braxenv/bin/activate
+
+git clone https://github.com/MandiZhao/brax
 pip install --upgrade pip
 pip install -e .
 ```
