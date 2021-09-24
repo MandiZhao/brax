@@ -23,7 +23,7 @@ from brax.experimental.braxlines.vgcrl import utils as vgcrl_utils
 register_default_components()
 
 import tensorflow_probability as tfp
-
+print('Finished imports')
 tfp = tfp.substrates.jax
 tfd = tfp.distributions
 
@@ -69,7 +69,7 @@ if output_path:
 print(f'output_path={output_path}')
 
 ##### Initialize Brax environment #####
-
+print('Initializing env')
 visualize = True # @param{'type': 'boolean'}
 
 # Create baseline environment to get observation specs
@@ -91,13 +91,14 @@ env_fn = vgcrl_utils.create_fn(env_name=env_name, wrapper_params=dict(
     obs_norm_reward_multiplier=obs_norm_reward_multiplier, 
     ))
 eval_env_fn = functools.partial(env_fn, auto_reset=False)
-
+print('Finished creatin env fn')
 # make inference functions and goals for LGR metric
 core_env = env_fn()
 params, inference_fn = ppo.make_params_and_inference_fn(
       core_env.observation_size, core_env.action_size,
       normalize_observations=normalize_obs_for_rl, extra_params=extra_params)
 inference_fn = jax.jit(inference_fn)
+print('Finished jit inference fn')
 goals = tfd.Uniform(low=-disc.obs_scale, high=disc.obs_scale).sample(
     seed=jax.random.PRNGKey(0), sample_shape=(10,))
 
@@ -184,7 +185,7 @@ def progress(num_steps, metrics, params):
       params=params, env_fn=env_fn, disc=disc, inference_fn=inference_fn,
       goals=goals)
     metrics.update(lgr_metrics)
-
+  #wandb.log(dict(metrics))
   times.append(datetime.now())
   for key, v in metrics.items():
     plotdata[key] = plotdata.get(key, dict(x=[], y=[]))
@@ -199,6 +200,8 @@ def progress(num_steps, metrics, params):
   #   plot()
   #   plt.show()
 
+#import wandb 
+#wandb.init(project='brax')
 extra_loss_fns = dict(disc_loss=disc.disc_loss_fn) if extra_params else None
 _, params, _ = train_fn(
     environment_fn=env_fn, progress_fn=progress, extra_params=extra_params,

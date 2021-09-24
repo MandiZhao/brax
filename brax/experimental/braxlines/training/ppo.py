@@ -254,10 +254,13 @@ def train(environment_fn: Callable[..., envs.Env],
 
   grad_loss = jax.grad(loss_fn, has_aux=True)
 
+  @jax.jit
   def do_one_step_eval(carry, unused_target_t):
     state, policy_params, normalizer_params, extra_params, key = carry
     key, key_sample = jax.random.split(key)
-    obs = obs_normalizer_apply_fn(normalizer_params, state.core.obs)
+    obs = obs_normalizer_apply_fn(
+            jax.tree_map(lambda x: x[0], normalizer_params), state.core.obs)
+    #obs = obs_normalizer_apply_fn(normalizer_params, state.core.obs)
     logits = policy_model.apply(policy_params, obs)
     actions = parametric_action_distribution.sample(logits, key_sample)
     nstate = eval_step_fn(state, actions, normalizer_params, extra_params)
@@ -266,8 +269,8 @@ def train(environment_fn: Callable[..., envs.Env],
   @jax.jit
   def run_eval(state, key, policy_params, normalizer_params, extra_params):
     policy_params = jax.tree_map(lambda x: x[0], policy_params)
-    normalizer_params = jax.tree_map(lambda x: x[0], normalizer_params)
-    extra_params = jax.tree_map(lambda x: x[0], extra_params)
+    #normalizer_params = jax.tree_map(lambda x: x[0], normalizer_params)
+    #extra_params = jax.tree_map(lambda x: x[0], extra_params)
     (state, _, _, _, key), _ = jax.lax.scan(
         do_one_step_eval,
         (state, policy_params, normalizer_params, extra_params, key), (),
